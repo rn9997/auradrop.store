@@ -1,0 +1,59 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LocalSweat — Cart</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head><body>
+<header class="header"><div class="container nav">
+  <div class="logo"><span class="mark">LS</span>LocalSweat</div>
+  <nav class="row" style="gap:10px"><a class="btn ghost" href="index.html">Home</a><a class="btn ghost" href="catalog.html">Catalog</a><a class="btn ghost" href="contact.html">Contact</a></nav>
+  <div class="grow"></div><select id="ccy" class="select"><option>USD</option><option>BHD</option><option>EUR</option><option>GBP</option></select>
+</div></header>
+
+<main class="container">
+  <h1>Your Cart</h1>
+  <table class="table" id="table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th></th></tr></thead><tbody></tbody></table>
+  <p id="empty" class="small" style="display:none">Your cart is empty.</p>
+  <div class="row" style="justify-content:flex-end;gap:12px;margin-top:10px">
+    <div class="card pad">
+      <div class="row spread"><span class="small">Subtotal</span><strong id="subtotal">$0.00</strong></div>
+      <div class="row spread"><span class="small">Shipping (demo)</span><span id="ship" class="small">$0.00</span></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:8px 0">
+      <div class="row spread"><span class="small">Total</span><strong id="grand">$0.00</strong></div>
+      <div style="height:8px"></div>
+      <button class="btn primary" disabled id="checkout">Checkout (coming soon)</button>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">© <span id="year"></span> LocalSweat</footer>
+<script src="assets/app.js"></script>
+<script>
+(async function(){
+  bindHeader();
+  const data = await loadProducts();
+  function render(){
+    const tbody=document.querySelector('#table tbody'); tbody.innerHTML='';
+    const ccy=STORE.getCurrency(); let any=false, sub=0;
+    for(const [id,qty] of Object.entries(STORE.getCart())){
+      const p = data.find(x=>x.id===id); if(!p) continue; any=true; const line=p.priceUSD*qty; sub+=line;
+      const tr=document.createElement('tr');
+      tr.innerHTML=\`<td><div class="row"><img src="\${p.img}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px">
+      <div><div style="font-weight:600">\${p.name}</div><div class="small">\${p.condition}</div></div></div></td>
+      <td><input type="number" min="1" value="\${qty}" class="input" style="width:70px"></td><td>\${toMoney(ccy,p.priceUSD)}</td><td>\${toMoney(ccy,line)}</td><td><button class="btn ghost">Remove</button></td>\`;
+      tr.querySelector('input').onchange=e=>{ STORE.setQty(id,e.target.value); render(); };
+      tr.querySelector('button').onclick=()=>{ STORE.remove(id); render(); };
+      tbody.appendChild(tr);
+    }
+    document.getElementById('empty').style.display=any?'none':'block';
+    document.getElementById('subtotal').textContent=toMoney(ccy,sub);
+    document.getElementById('ship').textContent=toMoney(ccy,0);
+    document.getElementById('grand').textContent=toMoney(ccy,sub);
+    document.getElementById('checkout').disabled=!any;
+  }
+  document.addEventListener('currency:changed', render);
+  document.addEventListener('cart:changed', render);
+  render();
+  document.getElementById('year').textContent=new Date().getFullYear();
+})();
+</script>
+</body></html>
